@@ -2,10 +2,11 @@ package implementation
 
 import (
 	"encoding/json"
-	"log"
+	logger "log"
 	"md-geo-track/request_response/location"
 
 	"github.com/IBM/sarama"
+	"github.com/sirupsen/logrus"
 )
 
 // ProcessLocationData
@@ -13,11 +14,13 @@ import (
 func (s *service) ProcessLocationData(message *sarama.ConsumerMessage) {
 	var locReq location.LocationReq
 	if err := json.Unmarshal(message.Value, &locReq); err != nil {
-		log.Printf("could not unmarshal message: %v", err)
+		s.log.WithError(err).Error("could not unmarshal message")
 		return
 	}
 
-	log.Printf("received location data: %+v", locReq)
+	s.log.WithFields(logrus.Fields{
+		"location": locReq,
+	}).Info("received location data")
 
 	// Simulate sending data to a third party for analysis
 	s.sendToThirdParty(locReq)
@@ -25,5 +28,6 @@ func (s *service) ProcessLocationData(message *sarama.ConsumerMessage) {
 
 func (s *service) sendToThirdParty(locReq location.LocationReq) {
 	// Simulate sending data to a third party
-	log.Printf("sending data to third party: %+v", locReq)
+	s.log.Info("sending data to third party")
+	logger.Println("---------------------------------------------")
 }

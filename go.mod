@@ -6,6 +6,7 @@ require (
 	github.com/IBM/sarama v1.45.0
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
+	github.com/sirupsen/logrus v1.9.3
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 )
@@ -36,5 +37,6 @@ require (
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )

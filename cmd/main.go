@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"md-geo-track/controller"
 	"md-geo-track/implementation"
 	"md-geo-track/kafka"
@@ -14,15 +13,21 @@ import (
 	"syscall"
 
 	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func main() {
+	// Initialize Logger
+	log := logrus.New()
+	log.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
 
 	err := godotenv.Load("../.env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.WithError(err).Fatal("Error loading .env file")
 	}
 
 	var (
@@ -45,21 +50,24 @@ func main() {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		dbHost, dbUser, dbPassword, dbName, dbPort, dbSSLMode, dbTimeZone)
 
+	log.Info("Connecting to database...")
+
 	// Connect to Database
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.WithError(err).Fatal("Failed to connect to database")
 	}
+	log.Info("Successfully connected to the database.")
 
 	repo := repository.New(db)
 
-	svc := implementation.New(repo)
+	svc := implementation.New(repo, log)
 
 	controller := controller.New(svc)
 
 	handler := httpTransport.SetUpRouter(controller)
 
-	kafka.StartConsumer(brokers, topic, groupID, svc)
+	kafka.StartConsumer(brokers, topic, groupID, svc, log)
 
 	errs := make(chan error)
 
@@ -69,7 +77,7 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	fmt.Println("Server is running " + httpAddr)
+	log.WithField("address", httpAddr).Info("Starting HTTP server...")
 
 	go func() {
 		server := &http.Server{
@@ -79,5 +87,5 @@ func main() {
 		errs <- server.ListenAndServe()
 	}()
 
-	log.Println("exit", <-errs)
+	log.Error("exit", <-errs)
 }
