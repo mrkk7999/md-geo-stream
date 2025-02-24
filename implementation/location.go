@@ -23,11 +23,24 @@ func (s *service) ProcessLocationData(message *sarama.ConsumerMessage) {
 	}).Info("received location data")
 
 	// Simulate sending data to a third party for analysis
-	s.sendToThirdParty(locReq)
+	err := s.sendToThirdParty(locReq)
+	if err != nil {
+		s.log.Error("Error sending data to third party")
+		return
+	}
+	// will do it as queue/log based
+	// will process this too asynchronously
+	err = s.repository.UpdateLocationStatus(locReq)
+	if err != nil {
+		s.log.Error("Error updating location status in db")
+		return
+	}
+	s.log.Info("Location end-to-end operation complete")
 }
 
-func (s *service) sendToThirdParty(locReq location.LocationReq) {
+func (s *service) sendToThirdParty(locReq location.LocationReq) error {
 	// Simulate sending data to a third party
 	s.log.Info("sending data to third party")
 	logger.Println("---------------------------------------------")
+	return nil
 }
